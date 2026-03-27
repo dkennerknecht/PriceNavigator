@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
-from app.models.entities import Offer, Product, Shop
+from app.models.entities import Offer, Product, ProductSource, Shop
 from app.services.offer_search import (
     MAX_OFFERS_PER_PRODUCT,
     OfferSearchService,
@@ -67,7 +67,7 @@ def test_offer_search_persists_only_top_10_ranked_results(seeded_session, sessio
     assert len(shops) >= 3
 
     class ManyOffersProvider:
-        def search(self, product: Product) -> ProviderSearchResult:
+        def search(self, session, product: Product) -> ProviderSearchResult:
             payloads = []
             for index in range(12):
                 shop = shops[index % len(shops)]
@@ -145,7 +145,7 @@ def test_offer_search_creates_shop_records_for_external_results(seeded_session, 
     assert product is not None
 
     class ExternalProvider:
-        def search(self, product: Product) -> ProviderSearchResult:
+        def search(self, session, product: Product) -> ProviderSearchResult:
             return ProviderSearchResult(
                 offers=[
                     {
@@ -189,3 +189,46 @@ def test_offer_search_creates_shop_records_for_external_results(seeded_session, 
     assert created_shop is not None
     assert created_shop.name == "Shop Example"
     assert result.offers[0].shop_id == created_shop.id
+
+
+def test_offer_search_prefers_product_sources_over_mock_results(seeded_client, session):
+    product = session.scalar(select(Product).where(Product.mpn == "FP92TN2"))
+    assert product is not None
+
+    session.add(
+        ProductSource(
+            product_id=product.id,
+            source_type="manual_offer",
+            source_value="https://real-shop.example/hager-fp92tn2",
+            raw_title="Hager FP92TN2 bei Real Shop",
+            raw_payload_json={
+                "price": 377.5,
+                "shipping_cost": 5.9,
+                "currency": "EUR",
+                "availability": "in_stock",
+                "lead_time_days": 2,
+                "shop_name": "Real Shop",
+                "shop_domain": "real-shop.example",
+                "offer_title": "Hager univers enclosure FP92TN2",
+            },
+            resolved_url="https://real-shop.example/hager-fp92tn2",
+            confidence=0.88,
+        )
+    )
+    session.commit()
+
+    response = seeded_client.post("/api/offers/search", json={"product_id": product.id})
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["created_count"] == 1
+    assert payload["warnings"] == []
+    assert {offer["source_url"] for offer in payload["offers"]} == {
+        "https://real-shop.example/hager-fp92tn2",
+    }
+
+    persisted = seeded_client.get(f"/api/offers?product_id={product.id}&include_inactive=true")
+    assert persisted.status_code == 200
+    assert {offer["source_url"] for offer in persisted.json()} == {
+        "https://real-shop.example/hager-fp92tn2",
+    }

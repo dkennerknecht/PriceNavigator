@@ -79,3 +79,9 @@ def delete_offer(offer_id: int, session: Session = Depends(get_session)) -> Dele
         raise HTTPException(status_code=404, detail="Offer not found")
     offer_repository.deactivate_offer(session, offer)
     return DeleteResponse(message="Offer deactivated")
+
+
+@router.delete("", response_model=DeleteResponse)
+def delete_all_offers(session: Session = Depends(get_session)) -> DeleteResponse:
+    deleted_count = offer_repository.hard_delete_all_offers(session)
+    return DeleteResponse(message="Offer table cleared", deleted_count=deleted_count)

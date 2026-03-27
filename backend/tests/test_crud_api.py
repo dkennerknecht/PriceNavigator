@@ -110,3 +110,15 @@ def test_shop_offer_and_shopping_list_crud(seeded_client, session):
 
     delete_shop = seeded_client.delete(f"/api/shops/{shop_id}")
     assert delete_shop.status_code == 200
+
+
+def test_delete_all_offers_clears_table(seeded_client, session):
+    before = session.scalars(select(Offer)).all()
+    assert before
+
+    response = seeded_client.delete("/api/offers")
+    assert response.status_code == 200
+    assert response.json()["deleted_count"] == len(before)
+
+    after = session.scalars(select(Offer)).all()
+    assert after == []

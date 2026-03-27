@@ -113,6 +113,8 @@ export const apiClient = {
     }),
   deleteOffer: (id: number) =>
     request<{ message: string }>(`/offers/${id}`, { method: "DELETE" }),
+  deleteAllOffers: () =>
+    request<{ message: string; deleted_count?: number }>("/offers", { method: "DELETE" }),
   listShoppingLists: (q?: string) =>
     request<ShoppingList[]>("/shopping-lists", { searchParams: { q } }),
   createShoppingList: (payload: Partial<ShoppingList>) =>

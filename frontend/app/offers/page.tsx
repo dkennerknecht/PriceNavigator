@@ -133,6 +133,37 @@ export default function OffersPage() {
     startTransition(() => void loadPage());
   }
 
+  async function clearOfferTable() {
+    if (!offers.length) {
+      setSearchState("idle");
+      setSearchFeedback("Keine Offers zum Löschen vorhanden.");
+      return;
+    }
+    if (!window.confirm("Wirklich die komplette Offer-Tabelle leeren?")) {
+      return;
+    }
+    try {
+      setError(null);
+      const result = await apiClient.deleteAllOffers();
+      setSelectedOffer(null);
+      setSearchState("success");
+      setSearchFeedback(
+        result.deleted_count
+          ? `${result.deleted_count} Offers gelöscht.`
+          : "Offer-Tabelle geleert.",
+      );
+      startTransition(() => void loadPage());
+    } catch (caughtError) {
+      setSearchState("idle");
+      setSearchFeedback(null);
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Offer-Tabelle konnte nicht geleert werden.",
+      );
+    }
+  }
+
   async function triggerSearch() {
     if (!searchProductId) {
       setSearchState("idle");
@@ -201,6 +232,14 @@ export default function OffersPage() {
             disabled={!searchProductId || searchState === "loading"}
           >
             {searchState === "loading" ? "Suche läuft ..." : "Angebots-Suche starten"}
+          </button>
+          <button
+            className="button button-danger"
+            type="button"
+            onClick={() => void clearOfferTable()}
+            disabled={searchState === "loading"}
+          >
+            Offer-Tabelle leeren
           </button>
         </div>
         {searchFeedback ? (

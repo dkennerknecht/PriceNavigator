@@ -57,6 +57,13 @@ def hard_delete_offers_for_products(session: Session, product_ids: list[int]) ->
     return result.rowcount or 0
 
 
+def hard_delete_all_offers(session: Session) -> int:
+    statement = delete(Offer)
+    result = session.execute(statement)
+    session.commit()
+    return result.rowcount or 0
+
+
 def save_offer(session: Session, payload: dict) -> Offer:
     existing = find_offer_by_source(
         session, payload["product_id"], payload["shop_id"], payload["source_url"]
