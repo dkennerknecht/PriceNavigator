@@ -1,29 +1,46 @@
 .DS_Store
+
+# Local environment files
 .env
 .env.local
 .env.*.local
+backend/.env
+frontend/.env
+
+# Python
 .venv/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+htmlcov/
 *.pyc
 *.pyo
 *.pyd
+*.egg-info/
+
+# Databases and local runtime data
 *.sqlite
 *.db
 *.db-journal
 backend/data/*.sqlite
 backend/data/*.db
+backend/data/*.db-*
+data/*.sqlite
+data/*.db
+data/*.db-*
+
+# Node / Next.js
+.npm-cache/
+.next/
+.next-prev-build/
 frontend/.next/
 frontend/node_modules/
+frontend/coverage/
 frontend/playwright-report/
 frontend/test-results/
-frontend/coverage/
-.npm-cache/
-.next
-.next/
-.next-prev-build
-.next-prev-build/
-.playwright-browsers/
+frontend/*.tsbuildinfo
+
+# Playwright
 .playwright-browsers/
