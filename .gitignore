@@ -25,3 +25,4 @@ frontend/coverage/
 .next/
 .next-prev-build
 .next-prev-build/
+.playwright-browsers/
